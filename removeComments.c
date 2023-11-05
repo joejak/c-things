@@ -1,51 +1,61 @@
 #include <stdio.h>
 
-#define OUT 0
-#define INLINE 1
-#define INBLOCK 2
-
-int next(int, int);
-
-int main()
+enum comment_state
 {
-    return next(OUT, getchar());
-}
+    NOT_COMMENT,
+    INLINE_COMMENT,
+    BLOCK_COMMENT
+};
 
-int next(int state, int last){
-    if(last == EOF){
-        return 0; 
-    }
-    int current = getchar();
-    switch(state){
-        case OUT:
-            if(last == '/'){
-                switch(current){
-                    case '/':
-                        if(last==current)
-                            return next(INLINE, current);
-                    break; 
-                    case '*':
-                        if(last=='/'){
-                            return next(INBLOCK, current); 
-                        }
+int main(void)
+{
+    enum comment_state state = NOT_COMMENT;
+    int last = getchar();
+    int c;
+
+    if (EOF == last)
+        return 0;
+
+    while ((c = getchar()) != EOF)
+    {
+        switch (state)
+        {
+        case NOT_COMMENT:
+            if ('/' == last)
+            {
+                if ('/' == c)
+                    state = INLINE_COMMENT;
+                else if ('*' == c)
+                    state = BLOCK_COMMENT;
+            }
+            break;
+        
+        case INLINE_COMMENT:
+            if ('\n' == c)
+                state = NOT_COMMENT;
+            break;
+
+        case BLOCK_COMMENT:
+            if ('*' == last && '/' == c)
+            {
+                last = getchar();
+                if (EOF == last)
                     break;
-                    default:
-                        putchar(last);
-                        return next(OUT, current); 
-                }
+
+                state = NOT_COMMENT;
+                continue;
             }
-            else{
-                putchar(last); 
-                return next(OUT, current); 
-            }
-        case INLINE:
-            if(last == '\n')
-                return next(OUT, current); 
-        case INBLOCK:
-            if(last == '*' && current == '/'){
-                return next(OUT, getchar());
-            }
-        default:
-            return next(state, current); 
+            break;
+        }
+
+        if (NOT_COMMENT == state)
+            putchar(last);
+
+        last = c;
     }
+
+    if (NOT_COMMENT == state)
+        putchar(last);
+
+    return 0;
 }
